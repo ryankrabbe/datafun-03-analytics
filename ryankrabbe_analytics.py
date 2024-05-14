@@ -3,8 +3,6 @@
 import csv
 import os
 import json
-import ssl
-import re
 # External library imports (requires virtual environment)
 import requests
 from collections import Counter
@@ -13,12 +11,15 @@ import xlrd
 # Function to fetch data to a new text file
 def fetch_and_write_txt_data(txt_folder_name, txt_filename, txt_url):
     try:
+
+        # Fetches data from URL
         response = requests.get(txt_url)
         if response.status_code == 200:
+
             # Create folder if it does not exist
             if not os.path.exists(txt_folder_name):
                 os.makedirs(txt_folder_name)
-            
+
             # Write text data to text file
             with open(os.path.join(txt_folder_name, txt_filename), 'w', encoding='utf-8') as file:
                 file.write(response.text)
@@ -27,16 +28,18 @@ def fetch_and_write_txt_data(txt_folder_name, txt_filename, txt_url):
             print(f"Failed to fetch data: {response.status_code}")
     except Exception as e:
         print(f"Error fetching and writing text data: {e}")
+
 # Function to read data from an Excel file (.xls format)
 def read_excel_data(excel_folder_name, excel_filename):
     try:
+
         # Construct the file path
         excel_file_path = os.path.join(excel_folder_name, excel_filename)
         
         # Open the Excel file
         workbook = xlrd.open_workbook(excel_file_path)
         
-        # Access a specific sheet (e.g., the first sheet)
+        # Access a specific sheet
         sheet = workbook.sheet_by_index(0)
         
         # Read and print data from the sheet
@@ -48,10 +51,11 @@ def read_excel_data(excel_folder_name, excel_filename):
 
 # Function to fetch data to a new Excel file
 def fetch_and_write_excel_data(excel_folder_name, excel_filename, excel_url):
+    
     # Fetches data from URL
     response = requests.get(excel_url)
-    
     if response.status_code == 200:
+
         # Create folder if it does not exist
         if not os.path.exists(excel_folder_name):
             os.makedirs(excel_folder_name)
@@ -65,11 +69,14 @@ def fetch_and_write_excel_data(excel_folder_name, excel_filename, excel_url):
         read_excel_data(excel_folder_name, excel_filename)
     else:
         print(f"Failed to fetch data: {response.status_code}")
+
 # Function to fetch data to a new csv file
 def fetch_and_write_csv_data(csv_folder_name, csv_filename, csv_url):
+
     # Fetches data from url
     response = requests.get(csv_url)
     if response.status_code == 200:
+
         # Create folder if it does not exist
         if not os.path.exists(csv_folder_name):
             os.makedirs(csv_folder_name)
@@ -80,11 +87,14 @@ def fetch_and_write_csv_data(csv_folder_name, csv_filename, csv_url):
         print("csv data saved successfully.")
     else:
         print(f"Failed to fetch data: {response.status_code}")
+
 # Function to fetch data to a new json file
 def fetch_and_write_json_data(json_folder_name, json_filename, json_url):
+
     # Fetches data from url
     response = requests.get(json_url)
     if response.status_code == 200:
+
         # Create folder if it does not exist
         if not os.path.exists(json_folder_name):
             os.makedirs(json_folder_name)
@@ -95,16 +105,20 @@ def fetch_and_write_json_data(json_folder_name, json_filename, json_url):
         print("json data saved successfully.")
     else:
         print(f"Failed to fetch data: {response.status_code}")
+
 # Function to process text data
 def process_txt_file(txt_folder_name, input_filename, output_filename):
     try:
         input_file_path = os.path.join(txt_folder_name, input_filename)
         with open(input_file_path, 'r', encoding='utf-8') as input_file:
             text_data = input_file.read()
+
         # Count total words
         word_count = len(text_data.split())
+
         # Convert the Counter object to a string for writing to file
         processed_data = f"Word Count: {word_count}\n{text_data}"
+
         # Define output file path
         output_file_path = os.path.join(txt_folder_name, output_filename)
             
@@ -118,64 +132,62 @@ def process_txt_file(txt_folder_name, input_filename, output_filename):
     
 # Function to process excel data
 def process_excel_file(excel_folder_name, input_filename, output_filename):
-    """
-    Process the contents of an Excel file and write the results to a text file.
-
-    Parameters:
-    - excel_folder_name (str): The name of the folder containing the input and output files.
-    - input_filename (str): The name of the input Excel file to be processed.
-    - output_filename (str): The name of the output text file to write the results to.
-    """
     try:
         # Construct the file paths
         input_file_path = os.path.join(excel_folder_name, input_filename)
         output_file_path = os.path.join(excel_folder_name, output_filename)
         
         # Read input Excel file
-        workbook = xlrd.open_workbook(input_file_path, encoding_override="latin1")
-        sheet = workbook.sheet_by_index(0)  # Assuming data is in the first sheet
+        df = pd.read_excel(input_file_path)
         
-        # Flatten the Excel rows into a single list of values
-        data = [value for row in range(sheet.nrows) for value in sheet.row_values(row)]
+        # Calculate summary statistics
+        summary_stats = df.describe()
         
-        # Use Counter to count occurrences of each value
-        value_counts = Counter(data)
+        # Convert the summary statistics DataFrame to a string for writing to file
+        summary_stats_str = summary_stats.to_string()
         
-        # Convert the Counter object to a string for writing to file
-        processed_data = '\n'.join([f"{value}: {count}" for value, count in value_counts.items()])
-        
-        # Write processed data to output text file
+        # Write summary statistics to output text file
         with open(output_file_path, 'w') as output_file:
-            output_file.write(processed_data)
+            output_file.write(summary_stats_str)
         
-        print(f"Processed data written to '{output_file_path}'")
+        print(f"Summary statistics written to '{output_file_path}'")
     except Exception as e:
         print(f"Error processing Excel file: {e}")
+
  # Function to process csv data
 def process_csv_file(csv_folder_name, input_filename, output_filename):
     try:
         input_file_path = os.path.join(csv_folder_name, input_filename)
+
         # Read input CSV file
         with open(input_file_path, 'r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
+
             # Read the header to dynamically determine column names
             header = next(csv_reader)
+
             # Read data and convert rows to tuples
-            data = [tuple(row) for row in csv_reader] 
+            data = [tuple(row) for row in csv_reader]
+
         # Pandas dataframe for analysis
         df = pd.DataFrame(data, columns=header)
+
         # Calculate summary statistics
         summary_stats = df.describe()
-        #convert summary statistics to sting
+
+        #convert summary statistics to string
         summary_stats_str = str(summary_stats)
+
         # Define output file path
         output_summary_path = os.path.join(csv_folder_name, output_filename)
+
         # Write summary statistics to output text file
         with open(output_summary_path, 'w') as output_file:
             output_file.write(summary_stats_str)
         print(f"Summary statistics saved to '{output_summary_path}'")
     except Exception as e:
-        print(f"Error processing CSV file: {e}")   
+        print(f"Error processing CSV file: {e}")
+
 # Function to process json data
 def process_json_file(json_folder_name, input_filename, output_filename):
     try:
@@ -216,29 +228,35 @@ def process_json_file(json_folder_name, input_filename, output_filename):
 # Main function to demonstrate module capabilities
 def main():
     ''' Main function to demonstrate module capabilities. '''
+
     # Print my name
     name = "Ryan Krabbe"
     print(f"Name: {name}")
+
     # Main url's
     txt_url = 'https://shakespeare.mit.edu/romeo_juliet/full.html'
     csv_url = 'https://raw.githubusercontent.com/MainakRepositor/Datasets/master/World%20Happiness%20Data/2020.csv' 
     excel_url = 'https://github.com/bharathirajatut/sample-excel-dataset/raw/master/cattle.xls' 
     json_url = 'http://api.open-notify.org/astros.json'
+
     # Folder names
     txt_folder_name = 'data-txt'
     csv_folder_name = 'data-csv'
     excel_folder_name = 'data-excel' 
     json_folder_name = 'data-json'
+
     # File names
     txt_filename = 'romeoJuliet.txt'
     csv_filename = 'countryLadderScore.csv'
     excel_filename = 'cattle.xls' 
     json_filename = 'astronauts.json'
+
     # Function to fetch data from sources and convert it to file formats
     fetch_and_write_txt_data(txt_folder_name, txt_filename, txt_url)
     fetch_and_write_csv_data(csv_folder_name, csv_filename,csv_url)
     fetch_and_write_excel_data(excel_folder_name, excel_filename, excel_url)
     fetch_and_write_json_data(json_folder_name, json_filename,json_url)
+
     # Function to process data in file formats
     process_txt_file(txt_folder_name, 'romeoJuliet.txt', 'results_txt.txt')
     process_csv_file(csv_folder_name,'countryLadderScore.csv', 'results_csv.txt')
