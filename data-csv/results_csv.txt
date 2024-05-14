@@ -1,0 +1,7 @@
+       Country name  Regional indicator Ladder score  ... Explained by: Generosity Explained by: Perceptions of corruption Dystopia + residual
+count           153                 153          153  ...                      153                                     153                 153
+unique          153                  10          153  ...                      153                                     153                 153
+top         Finland  Sub-Saharan Africa  7.808700085  ...              0.159670442                             0.477857262         2.762835026
+freq              1                  39            1  ...                        1                                       1                   1
+
+[4 rows x 20 columns]
